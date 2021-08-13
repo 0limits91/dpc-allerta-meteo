@@ -15,7 +15,7 @@ class DpcBollettiniRepositoryParser:
         self.__jData = json.loads(requests.get(self.__URL).text)
         self.__oggi = date.today()
         #test specific date
-        self.__oggi = datetime.fromisoformat("2021-08-03")
+        #self.__oggi = datetime.fromisoformat("2021-08-03")
         self.__ieri = self.__oggi - timedelta(days=1)
         self.__oggi = self.__oggi.strftime('%Y%m%d')
         self.__ieri = self.__ieri.strftime('%Y%m%d')

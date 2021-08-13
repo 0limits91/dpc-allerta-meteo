@@ -3,7 +3,7 @@ import json
 import requests
 import geopandas as gpd
 from fiona.io import ZipMemoryFile
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from BollettinoMeteo import BollettinoMeteo
 
 class DpcBollettiniRepositoryParser:
@@ -13,8 +13,9 @@ class DpcBollettiniRepositoryParser:
         self.__day = "oggi"
         self.__city = "Roma"
         self.__jData = json.loads(requests.get(self.__URL).text)
-
         self.__oggi = date.today()
+        #test specific date
+        self.__oggi = datetime.fromisoformat("2021-08-03")
         self.__ieri = self.__oggi - timedelta(days=1)
         self.__oggi = self.__oggi.strftime('%Y%m%d')
         self.__ieri = self.__ieri.strftime('%Y%m%d')
@@ -39,10 +40,15 @@ class DpcBollettiniRepositoryParser:
         self.__city = city
 
     def getRemoteZipFileName(self, day_selected):
+        remoteFileNames = []
         for fileInfo in self.__jData:
             if fileInfo['name'].startswith(day_selected):
-                return fileInfo['name']
-        return ""
+                remoteFileNames.append(fileInfo['name'])
+
+        if len(remoteFileNames) == 0:
+            return[]
+
+        return remoteFileNames[-1]
 
     def parse(self):
         if self.__day == "ieri":
@@ -51,11 +57,16 @@ class DpcBollettiniRepositoryParser:
             day_selected = self.__oggi
 
         self.__zipFileName = self.getRemoteZipFileName(day_selected)
-        if self.__zipFileName == "":
+
+        if len(self.__zipFileName) == 0:
             print("Dati giornalieri non ancora inseriti mostro quelli di ieri/oggi")
             day_selected = self.__ieri
             self.__zipFileName = self.getRemoteZipFileName(day_selected)
             self.day = "domani"
+
+        if len(self.__zipFileName) == 0:
+            print("Data non valida!")
+            exit(1)
 
         self.__fileName = self.__zipFileName.split('_all.zip')[0].split('/')[-1:][0]
 
@@ -71,7 +82,7 @@ class DpcBollettiniRepositoryParser:
                 day_partial_file = "_tomorrow"
 
             complete_filename = self.__fileName + day_partial_file + ".shp"
-            print(complete_filename)
+
             with memfile.open(complete_filename) as src:
                 #crs = src.crs
                 #gdf = gpd.GeoDataFrame.from_features(src, crs=crs)

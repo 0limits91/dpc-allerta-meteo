@@ -2,41 +2,51 @@ import dpcBollettiniRepositoryParser as dpc
 from datetime import date
 from tools import formatDateToFilename
 from CacheDB import CacheDB
+import os
 
+def parseBolletiniMeteo(selected_date, selected_city, choise, usingCache):
+    dpcMeteoParser = dpc.DpcBollettiniRepositoryParser(selected_date)
+    cacheResult = []
+    if usingCache:
+        if not os.path.isdir("cache"):
+            try:
+                os.mkdir("cache")
+            except OSError:
+                print("Creation of the directory 'cache' failed")
 
-choise = ("oggi", "domani")
-selected_date = date.today()
+        cache = CacheDB("cache/" + formatDateToFilename(selected_date) + ".db")
+        currentFileName = dpcMeteoParser.getRemoteZipFileName(formatDateToFilename(selected_date));
+        cacheResult = cache.getReport(f"Select * from cache where nome_file = '{currentFileName.split('_all.zip')[0].split('/')[-1:][0]}' AND city = '{selected_city}' ")
 
-#selected_date = "2021-08-03"
-db = CacheDB("cache/"+formatDateToFilename(selected_date)+".db")
+    if len(cacheResult) > 0:
+            print("Dati recuperati dalla cache.")
+            alertResult = cache.getAlert()
+    else:
+        print("Cache disabilitata o dati non trovati nella cache!")
+        dpcMeteoParser.choise = choise
+        dpcMeteoParser.city = selected_city
+        alertResult = dpcMeteoParser.parse()
+        if usingCache:
+            cache.insertReport(selected_date, alertResult)
 
-dpcMeteoParser = dpc.DpcBollettiniRepositoryParser(selected_date)
+    return alertResult
 
-currentFileName = dpcMeteoParser.getRemoteZipFileName(formatDateToFilename(selected_date));
-print(currentFileName.split('_all.zip')[0].split('/')[-1:][0])
+def printAlertResult(alertResult):
+    print(
+        "Città: " + alertResult.city + "\n",
+        "Zona: " + alertResult.nome_zona + "\n",
+        "Info Zona: " + alertResult.info_zona + "\n",
+        "Criticità: " + alertResult.allerta_criticità + " - " + alertResult.info_criticità + "\n",
+        "Allerta Temporali: " + alertResult.allerta_temporali + " - " + alertResult.info_temporali + "\n",
+        "Allerta Idrogeologico: " + alertResult.allerta_idrogeologico + " - " + alertResult.info_idrogeologico + "\n",
+        "Allerta Idraulico: " + alertResult.allerta_idraulico + " - " + alertResult.info_temporali + "\n",
+        "Comuni Interessati: " + str(alertResult.città_interessate) + "\n",
+        "Geometria: " + str(alertResult.geometry) + "\n",
+        "Nome File: " + alertResult.nome_file
+    )
 
-rows = db.get("Select * from cache where file_name = '"+currentFileName.split('_all.zip')[0].split('/')[-1:][0]+"'")
+if __name__ == '__main__':
+    choise = ("oggi", "domani")
+    printAlertResult(parseBolletiniMeteo(date.today(), "Avellino", choise[0], usingCache=False))
+    printAlertResult(parseBolletiniMeteo("2021-08-03", "Roma", choise[0], usingCache=True))
 
-if len(rows) > 0:
-    for row in rows:
-        print("Cached:", row)
-        exit(0)
-else:
-    dpcMeteoParser.choise = choise[0]
-    dpcMeteoParser.city = "Avellino"
-    alertResult = dpcMeteoParser.parse()
-    db.insert(selected_date,alertResult)
-
-
-print(
-    "Città: " + alertResult.city + "\n",
-    "Zona: " + alertResult.nome_zona + "\n",
-    "Info Zona: " + alertResult.info_zona + "\n",
-    "Criticità: " + alertResult.allerta_criticità + " - " + alertResult.info_criticità + "\n",
-    "Allerta Temporali: " + alertResult.allerta_temporali + " - " + alertResult.info_temporali + "\n",
-    "Allerta Idrogeologico: " + alertResult.allerta_idrogeologico + " - " + alertResult.info_idrogeologico + "\n",
-    "Allerta Idraulico: " + alertResult.allerta_idraulico + " - " + alertResult.info_temporali + "\n",
-    "Comuni Interessati: " + str(alertResult.città_interessate) + "\n",
-    "Geometria: " + str(alertResult.geometry),
-    "Nome File: " + alertResult.nome_file
-)

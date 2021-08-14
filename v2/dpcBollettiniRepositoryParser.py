@@ -3,33 +3,42 @@ import json
 import requests
 import geopandas as gpd
 from fiona.io import ZipMemoryFile
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 from BollettinoMeteo import BollettinoMeteo
+from tools import formatDateToFilename
 
 class DpcBollettiniRepositoryParser:
-    def __init__(self):
+
+    def __init__(self, date):
         self.__URL = "https://api.github.com/repos/pcm-dpc/DPC-Bollettini-Criticita-Idrogeologica-Idraulica/contents/files/all"
         self.__RAW_URL = "https://raw.githubusercontent.com/pcm-dpc/DPC-Bollettini-Criticita-Idrogeologica-Idraulica/master/files/all"
-        self.__day = "oggi"
+        self.__choice = "oggi"
         self.__city = "Roma"
         self.__jData = json.loads(requests.get(self.__URL).text)
-        self.__oggi = date.today()
-        #test specific date
-        #self.__oggi = datetime.fromisoformat("2021-08-03")
-        self.__ieri = self.__oggi - timedelta(days=1)
-        self.__oggi = self.__oggi.strftime('%Y%m%d')
-        self.__ieri = self.__ieri.strftime('%Y%m%d')
+        self.__today = datetime.fromisoformat(str(date))
+        self.__yesterday = self.__today - timedelta(days=1)
         self.__zipFileName = ''
         self.__fileName = ''
         self.__allerta = BollettinoMeteo()
+        self.__today = formatDateToFilename(self.__today)
+        self.__yesterday = formatDateToFilename(self.__yesterday)
+
     
     @property
+    def choise(self):
+        return self.__choise
+
+    @choise.setter
+    def choise(self, choise):
+        self.__choise = choise
+
+    @property
     def day(self):
-        return self.__day
+        return self.__oggi
 
     @day.setter
     def day(self, day):
-        self.__day = day
+        self.__oggi = day
 
     @property
     def city(self):
@@ -40,29 +49,31 @@ class DpcBollettiniRepositoryParser:
         self.__city = city
 
     def getRemoteZipFileName(self, day_selected):
-        remoteFileNames = []
-        for fileInfo in self.__jData:
+        #remoteFileNames = []
+
+        for fileInfo in reversed(self.__jData):
             if fileInfo['name'].startswith(day_selected):
-                remoteFileNames.append(fileInfo['name'])
+                return fileInfo['name']
+                break
 
-        if len(remoteFileNames) == 0:
-            return[]
+        #if len(remoteFileNames) == 0:
+        return[]
 
-        return remoteFileNames[-1]
+        #return remoteFileNames[-1]
 
     def parse(self):
-        if self.__day == "ieri":
-            day_selected = self.__ieri
+        if self.__choise == "ieri":
+            day_selected = self.__yesterday
         else:
-            day_selected = self.__oggi
+            day_selected = self.__today
 
         self.__zipFileName = self.getRemoteZipFileName(day_selected)
 
         if len(self.__zipFileName) == 0:
             print("Dati giornalieri non ancora inseriti mostro quelli di ieri/oggi")
-            day_selected = self.__ieri
+            day_selected = self.__yesterday
             self.__zipFileName = self.getRemoteZipFileName(day_selected)
-            self.day = "domani"
+            self.choise = "domani"
 
         if len(self.__zipFileName) == 0:
             print("Data non valida!")
@@ -78,7 +89,7 @@ class DpcBollettiniRepositoryParser:
         zipshp = io.BytesIO(data_zip)
         with (ZipMemoryFile(zipshp)) as memfile:
             day_partial_file = "_today"
-            if self.__day == "domani":
+            if self.__choise == "domani":
                 day_partial_file = "_tomorrow"
 
             complete_filename = self.__fileName + day_partial_file + ".shp"

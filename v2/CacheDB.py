@@ -36,6 +36,8 @@ class CacheDB:
         self.db.commit()
 
     def getReport(self, sql):
+        self.__allerta.isValid = False
+
         db = self.getInstance()
         db.execute(str(sql))
         rows = db.fetchall()
@@ -68,6 +70,8 @@ class CacheDB:
 
             self.__allerta.città_interessate = ""
             self.__allerta.nome_file = self.__cache["nome_file"]
+
+            self.__allerta.isValid = True
 
         return self.__cache
 

@@ -61,6 +61,8 @@ class DpcBollettiniRepositoryParser:
         #return remoteFileNames[-1]
 
     def parse(self):
+        self.__allerta.isValid = False
+
         if self.__choise == "ieri":
             day_selected = self.__yesterday
         else:
@@ -125,6 +127,7 @@ class DpcBollettiniRepositoryParser:
                         self.__allerta.città_interessate = città
                         self.__allerta.nome_file = self.__fileName
 
+                        self.__allerta.isValid = True
                         break
 
             return self.__allerta

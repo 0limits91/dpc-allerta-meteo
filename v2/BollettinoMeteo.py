@@ -21,6 +21,16 @@ class BollettinoMeteo:
         __geometry = None
         __nome_file = None
 
+        __isValid = False
+
+    @property
+    def isValid(self):
+        return self.__isValid
+
+    @isValid.setter
+    def isValid(self, valid):
+        self.__isValid = valid
+
     @property
     def città(self):
         return self.__city

@@ -26,27 +26,31 @@ def parseBolletiniMeteo(selected_date, selected_city, choise, usingCache):
         dpcMeteoParser.choise = choise
         dpcMeteoParser.city = selected_city
         alertResult = dpcMeteoParser.parse()
-        if usingCache:
+        if usingCache and alertResult.isValid:
             cache.insertReport(selected_date, alertResult)
 
     return alertResult
 
 def printAlertResult(alertResult):
-    print(
-        "Città: " + alertResult.city + "\n",
-        "Zona: " + alertResult.nome_zona + "\n",
-        "Info Zona: " + alertResult.info_zona + "\n",
-        "Criticità: " + alertResult.allerta_criticità + " - " + alertResult.info_criticità + "\n",
-        "Allerta Temporali: " + alertResult.allerta_temporali + " - " + alertResult.info_temporali + "\n",
-        "Allerta Idrogeologico: " + alertResult.allerta_idrogeologico + " - " + alertResult.info_idrogeologico + "\n",
-        "Allerta Idraulico: " + alertResult.allerta_idraulico + " - " + alertResult.info_temporali + "\n",
-        "Comuni Interessati: " + str(alertResult.città_interessate) + "\n",
-        "Geometria: " + str(alertResult.geometry) + "\n",
-        "Nome File: " + alertResult.nome_file
-    )
+    if alertResult.isValid:
+        print(
+            "Città: " + alertResult.city + "\n",
+            "Zona: " + alertResult.nome_zona + "\n",
+            "Info Zona: " + alertResult.info_zona + "\n",
+            "Criticità: " + alertResult.allerta_criticità + " - " + alertResult.info_criticità + "\n",
+            "Allerta Temporali: " + alertResult.allerta_temporali + " - " + alertResult.info_temporali + "\n",
+            "Allerta Idrogeologico: " + alertResult.allerta_idrogeologico + " - " + alertResult.info_idrogeologico + "\n",
+            "Allerta Idraulico: " + alertResult.allerta_idraulico + " - " + alertResult.info_temporali + "\n",
+            "Comuni Interessati: " + str(alertResult.città_interessate) + "\n",
+            "Geometria: " + str(alertResult.geometry) + "\n",
+            "Nome File: " + alertResult.nome_file
+        )
+    else:
+        print("Errore: Risultato non valido!")
 
 if __name__ == '__main__':
     choise = ("oggi", "domani")
     printAlertResult(parseBolletiniMeteo(date.today(), "Avellino", choise[0], usingCache=False))
-    printAlertResult(parseBolletiniMeteo("2021-08-03", "Roma", choise[0], usingCache=True))
+    printAlertResult(parseBolletiniMeteo("2021-08-03", "Roma", choise[1], usingCache=True))
+    printAlertResult(parseBolletiniMeteo(date.today(), "NomeErrato", choise[0], usingCache=True))
 

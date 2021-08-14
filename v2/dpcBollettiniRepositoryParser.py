@@ -23,7 +23,6 @@ class DpcBollettiniRepositoryParser:
         self.__today = formatDateToFilename(self.__today)
         self.__yesterday = formatDateToFilename(self.__yesterday)
 
-    
     @property
     def choise(self):
         return self.__choise
@@ -110,7 +109,6 @@ class DpcBollettiniRepositoryParser:
                         self.__allerta.info_zona = item.iloc[0]["Nome_zona"]
                         self.__allerta.nome_zona = item.iloc[0]["Zona_all"]
                         self.__allerta.geometry  = item.iloc[0]["geometry"]
-                        self.__allerta.città_interessate = città
 
                         self.__allerta.info_criticità = item.iloc[0]["Criticita"].split('/')[0]
                         self.__allerta.allerta_criticità= item.iloc[0]["Criticita"].split('/')[1]
@@ -123,6 +121,10 @@ class DpcBollettiniRepositoryParser:
 
                         self.__allerta.info_temporali = item.iloc[0]["Temporali"].split('/')[0]
                         self.__allerta.allerta_temporali = item.iloc[0]["Temporali"].split('/')[1]
+
+                        self.__allerta.città_interessate = città
+                        self.__allerta.nome_file = self.__fileName
+
                         break
 
             return self.__allerta

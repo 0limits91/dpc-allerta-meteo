@@ -19,6 +19,7 @@ class BollettinoMeteo:
 
         __città_interessate = None
         __geometry = None
+        __nome_file = None
 
     @property
     def città(self):
@@ -130,3 +131,12 @@ class BollettinoMeteo:
     @città_interessate.setter
     def città_interessate(self, città):
         self.__città_interessate = città
+
+    # Nome File
+    @property
+    def nome_file(self):
+        return self.__nome_file
+
+    @nome_file.setter
+    def nome_file(self, nome_file):
+        self.__nome_file = nome_file
